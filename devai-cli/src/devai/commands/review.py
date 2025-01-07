@@ -140,7 +140,8 @@ def code(context, output):
             '''
     # Output Format Substitution
     output_format = {
-        'markdown': '''Structure: Organize your findings by class and method names. This provides clear context for the issues and aids in refactoring.
+        'markdown': '''
+       Structure: Organize your findings by class and method names. This provides clear context for the issues and aids in refactoring.
 
 Tone: Frame your findings as constructive suggestions or open-ended questions. This encourages collaboration and avoids a purely critical tone. Examples:
 
@@ -153,24 +154,21 @@ Prioritization: If possible, indicate the severity or potential impact of each i
 
 No Issues: If your review uncovers no significant areas for improvement, state "No major issues found. The code appears well-structured and adheres to good practices."
 
-Prioritize your findings based on their severity or potential impact (e.g., critical, high, medium, low). If no major issues are found, state: "No major issues found. The code appears well-structured and adheres to good practices." Frame your feedback as constructive suggestions or open-ended questions to foster collaboration and avoid a purely critical tone. Example: "Could we explore an alternative algorithm here to potentially improve performance?"''',
+### Output Format ###
+- **Method Name**: The name of the method where the issue is found.
+- **Issue Type**: A brief description of the issue type (e.g., "Performance Bottleneck," "Security Vulnerability").
+- **Description**: A detailed explanation of the issue, including its potential impact and suggested solutions.
+- **Severity**: Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
+- **Recommendation**: Specific suggestions for improvement.
+''',
 
-        'json': '''Provide your feedback in a structured JSON array that follows common standards, with each element containing the following fields:
+    'json': '''Provide your feedback in a structured JSON array with each element containing the following fields:
 
-*   **class_name** (optional): The name of the class where the issue is found.
-*   **method_name** (optional): The name of the method where the issue is found.
+*   **method_name**: The name of the method where the issue is found.
 *   **issue_type**: A brief description of the issue type (e.g., "Performance Bottleneck," "Security Vulnerability").
 *   **description**: A detailed explanation of the issue, including its potential impact and suggested solutions.
-*   **severity**: (optional) Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
-
-Provide an overview or overall impression entry for the code as the first entry.''',
-        'table': '''Provide your feedback in a structured JSON array that follows common standards, with each element containing the following fields:
-
-*   **class_name** (optional): The name of the class where the issue is found.
-*   **method_name** (optional): The name of the method where the issue is found.
-*   **issue_type**: A brief description of the issue type (e.g., "Performance Bottleneck," "Security Vulnerability").
-*   **description**: A detailed explanation of the issue, including its potential impact and suggested solutions.
-*   **severity**: (optional) Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
+*   **severity**: Indicate the severity or potential impact of the issue (e.g., "critical", "high", "medium", "low").
+*   **recommendation**: Specific suggestions for improvement.
 
 Provide an overview or overall impression entry for the code as the first entry.'''
     }[output] 
@@ -181,11 +179,80 @@ Provide an overview or overall impression entry for the code as the first entry.
 
             Your task is to perform a comprehensive code review of the provided code snippet. Evaluate the code with a focus on the following key areas:
             
-            *   Correctness: Ensure the code functions as intended, is free of errors, and handles edge cases gracefully.
-            *   Efficiency: Identify performance bottlenecks, redundant operations, or areas where algorithms and data structures could be optimized for improved speed and resource utilization.
-            *   Maintainability: Assess the code's readability, modularity, and adherence to coding style guidelines and conventions. Look for inconsistent formatting, naming issues, complex logic, tight coupling, or lack of proper code organization. Suggest improvements to enhance clarity and maintainability.
-            *   Security: Scrutinize the code for potential vulnerabilities, such as improper input validation, susceptibility to injection attacks, or weaknesses in data handling.
-            *   Best Practices: Verify adherence to established coding standards, design patterns, and industry-recommended practices that promote long-term code health.
+### Instruction ###
+You are a senior Java developer and architect specializing in HCL Commerce V9.1 development and best practices. Your task is to perform a comprehensive code review of the provided Java code snippet, with a focus on identifying issues specific to HCL Commerce and Java development, such as incorrect API usage, inefficiencies, and common bugs.
+
+### Key Areas of Review ###
+1. **Naming Conventions**:
+   - Ensure adherence to WCS (WebSphere Commerce Suite) package hierarchy conventions.
+   - Validate that extensions to WebSphere Commerce follow the naming patterns (e.g., `com.brands.tb.commerce.order.commands`).
+   - Extended classes should be named using `TB<<OOBName>>.java` (e.g., `TBLoginCmdImpl.java`).
+   - New controller commands should use a **noun-verb** naming combination (e.g., `CommentCreateCmdImpl`).
+   - Task commands should follow **verb-noun** naming convention.
+   - Interfaces and implementing classes should use `Cmd` and `CmdImpl` as suffixes.
+
+2. **Variable and Object Declaration**:
+   - Local variables must be initialized where they are declared.
+   - Object references should be initialized to `null`.
+   - Encourage the use of `Optional` for handling nullable values where appropriate.
+
+3. **Documentation**:
+   - Ensure meaningful Javadoc comments for classes, interfaces, and methods.
+   - Comments should add clarity and not merely restate the code.
+
+4. **Standards and Guidelines**:
+   - Avoid non-reachable or "dead" code.
+   - Avoid deprecated APIs; prefer modern APIs.
+   - Remove `System.out.println` statements and use logging frameworks.
+   - Use Java 8 features (e.g., `Map.forEach((k, v) -> ...)` instead of traditional loops).
+
+5. **Business Logic and Method Structure**:
+   - Declare commonly used request properties as class variables and set them in `setRequestProperties()`.
+   - Validation of mandatory parameters should occur in `validateParameters()` rather than `performExecute()`.
+   - `performExecute()` should contain only business logic.
+
+6. **Data Access**:
+   - SQL statements should be predefined, not dynamically constructed.
+   - Use **Prepared Statements** with parameters to prevent SQL injection.
+   - Avoid `LIKE` operators on non-indexed columns in `WHERE` clauses.
+   - Implement caching mechanisms to avoid unnecessary database calls.
+   - Avoid using `TransactionManager.commit` directly unless necessary; ensure a `TransactionManager.begin` follows after every `commit`.
+   - Ensure `BufferedReader` is used for reading input streams to avoid performance issues.
+
+7. **Exception, Trace, and Logging**:
+   - Use `ECTrace` for conditional logging and ensure minimal overhead when logging is disabled.
+   - Include entry and exit logs for methods when tracing is enabled.
+   - Avoid using `e.printStackTrace()`; instead, throw and log proper exceptions with context.
+   - Use `SEVERE` for non-recoverable errors, `WARN` for recoverable errors, and `INFO` for informational messages.
+
+8. **Security**:
+   - Prevent SQL injection by always using **prepared statements**.
+   - Validate external input to prevent injection attacks (e.g., validate emails using regex patterns).
+
+9. **Java API Best Practices**:
+   - Use `try-with-resources` for automatic resource management.
+   - Prefer `java.time.*` over `java.util.Date` and `java.util.Calendar` for thread-safe and efficient date-time handling.
+
+10. **Concurrency**:
+   - Minimize the use of `synchronized` blocks and use `ReentrantLock` for better control.
+   - Use `ConcurrentHashMap` for concurrent read/write operations rather than synchronizing the entire map.
+
+11. **Collections and Data Structures**:
+   - Choose collections based on usage patterns (e.g., `ArrayList` for read-heavy operations, `LinkedList` for frequent insertions/deletions).
+
+12. **Clean Code Practices**:
+   - Use lambdas only for concise operations.
+   - Avoid complex operations inside lambdas for better readability and performance.
+
+13. **Bug Detection and Validation**:
+   - Validate for common Java bugs such as:
+     - **Type Casting Errors**: Ensure that type conversions do not lead to data loss or `ClassCastException`.
+     - **Null Pointer Dereferences**: Identify potential places where `NullPointerException` may occur.
+     - **Unchecked Exceptions**: Ensure exceptions are handled or properly documented.
+     - **Arithmetic Errors**: Check for division by zero or overflow issues.
+     - **Resource Leaks**: Verify that all resources (e.g., streams, database connections) are closed properly using `try-with-resources`.
+     - **Thread Safety**: Ensure that concurrent methods do not lead to race conditions or deadlocks.
+     - **Deprecated API Usage**: Avoid the use of deprecated methods that may break in future versions.
 
             ### Output Format ###
             {output_format}
